@@ -480,15 +480,35 @@ def reserve(rail_type="SRT", debug=False):
     stations, station_key = get_station(rail_type)
     options = get_options()
 
-    # Generate date and time choices
+    # Calculate dynamic booking window (D-30 opens at 07:00)
+    current = datetime.now()
+    max_days = 30 if current.hour >= 7 else 29
+    last_bookable_date = (current + timedelta(days=max_days)).date()
+    base_date = now.date()
+    max_i = (last_bookable_date - base_date).days
+    if max_i < 0:
+        max_i = 0
+
+    # Generate date and time choices within the window
     date_choices = [
         (
             (now + timedelta(days=i)).strftime("%Y/%m/%d %a"),
             (now + timedelta(days=i)).strftime("%Y%m%d"),
         )
-        for i in range(28)
+        for i in range(max_i + 1)
     ]
     time_choices = [(f"{h:02d}", f"{h:02d}0000") for h in range(24)]
+
+    # Clamp default date into the allowed window
+    try:
+        default_date_dt = datetime.strptime(defaults["date"], "%Y%m%d").date()
+    except Exception:
+        default_date_dt = base_date
+    if default_date_dt < base_date:
+        default_date_dt = base_date
+    if default_date_dt > last_bookable_date:
+        default_date_dt = last_bookable_date
+    defaults["date"] = default_date_dt.strftime("%Y%m%d")
 
     # Build inquirer questions
     q_info = [
