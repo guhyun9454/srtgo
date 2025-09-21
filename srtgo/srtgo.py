@@ -499,17 +499,6 @@ def reserve(rail_type="SRT", debug=False):
     ]
     time_choices = [(f"{h:02d}", f"{h:02d}0000") for h in range(24)]
 
-    # Clamp default date into the allowed window
-    try:
-        default_date_dt = datetime.strptime(defaults["date"], "%Y%m%d").date()
-    except Exception:
-        default_date_dt = base_date
-    if default_date_dt < base_date:
-        default_date_dt = base_date
-    if default_date_dt > last_bookable_date:
-        default_date_dt = last_bookable_date
-    defaults["date"] = default_date_dt.strftime("%Y%m%d")
-
     # Build inquirer questions
     q_info = [
         inquirer.List(
